@@ -1,7 +1,13 @@
+use difr::Difr;
+use std::path::PathBuf;
+
 fn main() {
-    println!(
-        "{} : {}",
-        tiny_keccak::sha3(b"hello"),
-        tiny_keccak::sha3(b"hello")
+    let app = Difr::init(
+        PathBuf::from("sample/bar.txt"),
+        PathBuf::from("sample/foo.txt"),
+        false,
+        None,
+        None,
     );
+    app.run();
 }
