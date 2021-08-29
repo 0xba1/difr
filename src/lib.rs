@@ -104,11 +104,11 @@ impl Difr {
 
         if file1_hash == file2_hash {
             println!(
-                "\n{}",
+                "\n{}\n",
                 "Contents of files are equal (hashes are equal)".bright_green()
             );
         } else {
-            println!("\n{}", "Contents of files are different".bright_red());
+            println!("\n{}\n", "Contents of files are different".bright_red());
         }
     }
 

@@ -1,2 +1,5 @@
 /target
 /sample
+*.swp
+*.swo
+.gitignore
