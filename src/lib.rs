@@ -234,8 +234,8 @@ impl Difr {
 
         // Read hash digest
         let result = hasher.finalize();
-        result.iter().fold(String::new(), |acc, cur_num| {
-            format!("{}{:x}", acc, cur_num)
-        })
+
+        // Convert result from array to hex string
+        hex::encode(result)
     }
 }
