@@ -210,7 +210,82 @@ impl Difr {
         }
     }
 
-    pub fn difr_exclude_empty_lines(&self) {}
+    pub fn difr_exclude_empty_lines(&self) {
+        // `Lines` iter of lines of each file string content
+        let lines1 = &mut self
+            .first_file
+            .lines()
+            .filter(|curr_line| !curr_line.is_empty());
+        let lines2 = &mut self
+            .second_file
+            .lines()
+            .filter(|curr_line| !curr_line.is_empty());
+
+        // Current line number of both `Line` `iter`s
+        let mut current_line_no: usize = 1;
+
+        // Go through the iter of `lines1` while going through that of `lines2` and compare them
+        while let Some(current_line1) = lines1.next() {
+            match &lines2.next() {
+                // When lines2 has fewer lines than lines1 and has reached the cut-off
+                None => {
+                    println!(
+                        "{} {} {}:\n{}\t{}",
+                        "Adjusted lines".bright_green(),
+                        &current_line_no.to_string().bright_green(),
+                        "-> End".bright_green(),
+                        ">".bright_green(),
+                        current_line1.bright_cyan()
+                    );
+                    while let Some(lines1_extra_line) = lines1.next() {
+                        println!("\t{}", lines1_extra_line.bright_cyan());
+                    }
+                    println!(
+                        "{}\t{}`{}`",
+                        ">".bright_green(),
+                        "End of File for ".bright_cyan(),
+                        &self.second_file_path.to_string_lossy().bright_cyan()
+                    );
+                }
+
+                Some(current_line2) => {
+                    if &current_line1 == current_line2 {
+                        current_line_no += 1;
+                        continue;
+                    } else {
+                        println!(
+                            "{} {}:\n{}\t{}\n{}\t{}\n",
+                            "Adjusted line".bright_green(),
+                            &current_line_no.to_string().bright_green(),
+                            ">".bright_green(),
+                            &current_line1.bright_cyan(),
+                            ">".bright_green(),
+                            &current_line2.bright_cyan()
+                        );
+                        current_line_no += 1;
+                    }
+                }
+            }
+        }
+
+        // When `lines1` has fewer lines than `lines2`
+        if let Some(lines2_extra_line) = lines2.next() {
+            println!(
+                "{} {} {}:\n{}\t{}`{}`\n{}\t{}",
+                "Adjusted lines".bright_green(),
+                &current_line_no.to_string().bright_green(),
+                "-> End".bright_green(),
+                ">",
+                "End of File for ".bright_cyan(),
+                &self.first_file_path.to_string_lossy().bright_cyan(),
+                ">".bright_green(),
+                lines2_extra_line.bright_cyan()
+            );
+        }
+        while let Some(lines2_extra_line) = lines2.next() {
+            println!("\t{}", lines2_extra_line.bright_cyan());
+        }
+    }
 
     fn is_text(pathbuf: PathBuf) -> bool {
         let file = std::fs::File::open(pathbuf).expect("failed to open file");
