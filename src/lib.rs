@@ -24,6 +24,8 @@ pub struct Difr {
 }
 
 impl Difr {
+    const ORANGE_RGB: (u8, u8, u8) = (203, 65, 11);
+
     pub fn init(
         first_file_path: PathBuf,
         second_file_path: PathBuf,
@@ -49,7 +51,7 @@ impl Difr {
         }
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         // Size of first_file in bytes
         let size1 = metadata(&self.first_file_path)
             .expect("Unable to get first file metadata")
@@ -67,21 +69,21 @@ impl Difr {
         println!(
             "{}:\t{}\t{}{}\t{}{}",
             "File 1".bright_green(),
-            &self.first_file_path.to_string_lossy().bright_blue(),
-            &size1.to_string().bright_blue(),
-            "bytes".bright_green(),
-            &no_of_lines1.to_string().bright_blue(),
-            "lines".bright_green()
+            &self.first_file_path.to_string_lossy().bright_cyan(),
+            &size1.to_string().bright_cyan(),
+            "bytes".bright_cyan(),
+            &no_of_lines1.to_string().bright_cyan(),
+            "lines".bright_cyan()
         );
         // """File 2:    file_name    size       no_of_lines"""
         println!(
             "{}:\t{}\t{}{}\t{}{}",
             "File 2".bright_green(),
-            &self.second_file_path.to_string_lossy().bright_blue(),
-            &size2.to_string().bright_blue(),
-            "bytes".bright_green(),
-            &no_of_lines2.to_string().bright_blue(),
-            "lines".bright_green()
+            &self.second_file_path.to_string_lossy().bright_cyan(),
+            &size2.to_string().bright_cyan(),
+            "bytes".bright_cyan(),
+            &no_of_lines2.to_string().bright_cyan(),
+            "lines".bright_cyan()
         );
 
         println!(
@@ -94,12 +96,12 @@ impl Difr {
         println!(
             "{}:\t{}",
             "File 1".bright_green(),
-            &file1_hash.bright_blue()
+            &file1_hash.bright_cyan()
         );
         println!(
             "{}:\t{}",
             "File 2".bright_green(),
-            &file2_hash.bright_blue()
+            &file2_hash.bright_cyan()
         );
 
         if file1_hash == file2_hash {
@@ -108,20 +110,79 @@ impl Difr {
                 "Contents of files are equal (hashes are equal)".bright_green()
             );
         } else {
-            println!("\n{}\n", "Contents of files are different".bright_red());
+            println!("\n{}\n", "Contents of files are different".bright_cyan());
+        }
+
+        self.difr_include_empty_lines();
+    }
+
+    pub fn difr_include_empty_lines(&mut self) {
+        let lines1 = &mut self.first_file.lines();
+        let lines2 = &mut self.second_file.lines();
+
+        let mut current_line_no: usize = 1;
+
+        while let Some(current_line1) = lines1.next() {
+            match &lines2.next() {
+                None => {
+                    println!(
+                        "{} {} {}:\n{}\t{}",
+                        "Lines".bright_green(),
+                        &current_line_no.to_string().bright_green(),
+                        "-> End".bright_green(),
+                        ">".bright_green(),
+                        current_line1.bright_cyan()
+                    );
+                    while let Some(lines1_extra_line) = lines1.next() {
+                        println!("\t{}", lines1_extra_line.bright_cyan());
+                    }
+                    println!(
+                        "{}\t{}`{}`",
+                        ">".bright_green(),
+                        "End of File for ".bright_cyan(),
+                        &self.second_file_path.to_str().unwrap().bright_cyan()
+                    );
+                }
+                Some(current_line2) => {
+                    if &current_line1 == current_line2 {
+                        current_line_no += 1;
+                        continue;
+                    } else {
+                        println!(
+                            "{} {}:\n{}\t{}\n{}\t{}\n",
+                            "Line".bright_green(),
+                            &current_line_no.to_string().bright_green(),
+                            ">".bright_green(),
+                            &current_line1.bright_cyan(),
+                            ">".bright_green(),
+                            &current_line2.bright_cyan()
+                        );
+                    }
+                }
+            }
+
+            current_line_no += 1;
+        }
+
+        if let Some(lines2_extra_line) = lines2.next() {
+            println!(
+                "{} {} {}:\n{}\t{}`{}`\n{}\t{}",
+                "Lines".bright_green(),
+                &current_line_no.to_string().bright_green(),
+                "-> End".bright_green(),
+                ">",
+                "End of File for ".bright_cyan(),
+                &self.first_file_path.to_str().unwrap().bright_cyan(),
+                ">".bright_green(),
+                lines2_extra_line.bright_cyan()
+            );
+        }
+        while let Some(lines2_extra_line) = lines2.next() {
+            println!("\t{}", lines2_extra_line.bright_cyan());
         }
     }
 
-    pub fn difr_include_empty_lines(&self) {}
-
-    pub fn difr_exclude_empty_lines(&self) {
-        // Content of first_file
-        let first_content = read_to_string(&self.first_file)
-            .expect(format!("Unable to read file: {:?}", &self.first_file).as_str());
-        // Content of second_file file
-        let second_content = read_to_string(&self.second_file)
-            .expect(format!("Unable to read file: {:?}", &self.second_file).as_str());
-    }
+    pub fn difr_exclude_empty_lines(&self) {}
 
     fn is_text(pathbuf: PathBuf) -> bool {
         let file = std::fs::File::open(pathbuf).expect("failed to open file");
