@@ -6,6 +6,7 @@ use std::{
     path::PathBuf,
 };
 
+/// The Cli App instance
 pub struct Difr {
     // `PathBuf` of one of the two files to be compared
     first_file_path: PathBuf,
@@ -24,8 +25,14 @@ pub struct Difr {
 }
 
 impl Difr {
-    const ORANGE_RGB: (u8, u8, u8) = (203, 65, 11);
-
+    /// Initializes the `Difr` app with:
+    /// first_file_path: PathBuf,
+    /// first_file: String,
+    /// second_file_path: PathBuf,
+    /// second_file: String,
+    /// exclude_empty_lines: bool,
+    /// from: Option<usize>,
+    /// to: Option<usize>,
     pub fn init(
         first_file_path: PathBuf,
         second_file_path: PathBuf,
@@ -51,7 +58,19 @@ impl Difr {
         }
     }
 
+    /// Runs the `Difr` app
     pub fn run(&mut self) {
+        // Prints info about the two files such as
+        // file name, file size, number of lines
+        self.info();
+        // Prints and compares hashes of files
+        self.compare_hashes();
+        // Compares content of both files
+        self.difr_include_empty_lines();
+    }
+
+    // Displays information about both files
+    pub fn info(&self) {
         // Size of first_file in bytes
         let size1 = metadata(&self.first_file_path)
             .expect("Unable to get first file metadata")
@@ -85,7 +104,10 @@ impl Difr {
             &no_of_lines2.to_string().bright_cyan(),
             "lines".bright_cyan()
         );
+    }
 
+    // Prints and compares hashes of both files
+    pub fn compare_hashes(&self) -> bool {
         println!(
             "\n{}",
             "Computing SHA3-256 hashes of files...".bright_green()
@@ -109,21 +131,26 @@ impl Difr {
                 "\n{}\n",
                 "Contents of files are equal (hashes are equal)".bright_green()
             );
+            true
         } else {
             println!("\n{}\n", "Contents of files are different".bright_cyan());
+            false
         }
-
-        self.difr_include_empty_lines();
     }
 
+    // Compares content of both files
     pub fn difr_include_empty_lines(&mut self) {
+        // `Lines` iter of lines of each file string content
         let lines1 = &mut self.first_file.lines();
         let lines2 = &mut self.second_file.lines();
 
+        // Current line number of both `Line` `iter`s
         let mut current_line_no: usize = 1;
 
+        // Go through the iter of `lines1` while going through that of `lines2` and compare them
         while let Some(current_line1) = lines1.next() {
             match &lines2.next() {
+                // When lines2 has fewer lines than lines1 and has reached the cut-off
                 None => {
                     println!(
                         "{} {} {}:\n{}\t{}",
@@ -140,9 +167,10 @@ impl Difr {
                         "{}\t{}`{}`",
                         ">".bright_green(),
                         "End of File for ".bright_cyan(),
-                        &self.second_file_path.to_str().unwrap().bright_cyan()
+                        &self.second_file_path.to_string_lossy().bright_cyan()
                     );
                 }
+
                 Some(current_line2) => {
                     if &current_line1 == current_line2 {
                         current_line_no += 1;
@@ -157,13 +185,13 @@ impl Difr {
                             ">".bright_green(),
                             &current_line2.bright_cyan()
                         );
+                        current_line_no += 1;
                     }
                 }
             }
-
-            current_line_no += 1;
         }
 
+        // When `lines1` has fewer lines than `lines2`
         if let Some(lines2_extra_line) = lines2.next() {
             println!(
                 "{} {} {}:\n{}\t{}`{}`\n{}\t{}",
@@ -172,7 +200,7 @@ impl Difr {
                 "-> End".bright_green(),
                 ">",
                 "End of File for ".bright_cyan(),
-                &self.first_file_path.to_str().unwrap().bright_cyan(),
+                &self.first_file_path.to_string_lossy().bright_cyan(),
                 ">".bright_green(),
                 lines2_extra_line.bright_cyan()
             );
