@@ -40,6 +40,15 @@ impl Difr {
         from: Option<usize>,
         to: Option<usize>,
     ) -> Self {
+        if !Difr::is_text(&first_file_path) || !Difr::is_text(&second_file_path) {
+            println!(
+                "{}",
+                "This program only compares text files for now, check for latest version."
+                    .bright_green()
+            );
+            std::process::exit(0);
+        }
+
         // Content of first_file
         let first_file = read_to_string(&first_file_path)
             .expect(format!("Unable to read file: {:?}", &first_file_path).as_str());
@@ -64,7 +73,9 @@ impl Difr {
         // file name, file size, number of lines
         self.info();
         // Prints and compares hashes of files
-        self.compare_hashes();
+        if self.compare_hashes() {
+            std::process::exit(0);
+        }
         // Compares content of both files
         self.difr_include_empty_lines();
     }
@@ -198,7 +209,7 @@ impl Difr {
                 "Lines".bright_green(),
                 &current_line_no.to_string().bright_green(),
                 "-> End".bright_green(),
-                ">",
+                ">".bright_green(),
                 "End of File for ".bright_cyan(),
                 &self.first_file_path.to_string_lossy().bright_cyan(),
                 ">".bright_green(),
@@ -210,7 +221,7 @@ impl Difr {
         }
     }
 
-    fn is_text(pathbuf: PathBuf) -> bool {
+    fn is_text(pathbuf: &PathBuf) -> bool {
         let file = std::fs::File::open(pathbuf).expect("failed to open file");
 
         let mut buffer = Vec::with_capacity(32);
