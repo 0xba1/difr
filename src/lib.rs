@@ -17,11 +17,11 @@ pub struct Difr {
     // Content of the `second_file_path`
     second_file: String,
     // Whether to exclude empty lines or not
-    exclude_empty_lines: bool,
+    //exclude_empty_lines: bool,
     // Line index to comparison begins. [Optional]
-    from: Option<usize>,
+    //from: Option<usize>,
     // Line index to comparison ends. [Optional]
-    to: Option<usize>,
+    //to: Option<usize>,
 }
 
 impl Difr {
@@ -36,9 +36,9 @@ impl Difr {
     pub fn init(
         first_file_path: PathBuf,
         second_file_path: PathBuf,
-        exclude_empty_lines: bool,
-        from: Option<usize>,
-        to: Option<usize>,
+        //exclude_empty_lines: bool,
+        //from: Option<usize>,
+        //to: Option<usize>,
     ) -> Self {
         if !Difr::is_text(&first_file_path) || !Difr::is_text(&second_file_path) {
             println!(
@@ -61,9 +61,9 @@ impl Difr {
             first_file,
             second_file_path,
             second_file,
-            exclude_empty_lines,
-            from,
-            to,
+            //exclude_empty_lines,
+            //from,
+            //to,
         }
     }
 
@@ -71,17 +71,18 @@ impl Difr {
     pub fn run(&mut self) {
         // Prints info about the two files such as
         // file name, file size, number of lines
-        self.info();
+        println!("{}", self.info());
         // Prints and compares hashes of files
         if self.compare_hashes() {
             std::process::exit(0);
         }
         // Compares content of both files
-        self.difr_include_empty_lines();
+        println!("{}", self.difr_include_empty_lines());
     }
 
     // Displays information about both files
-    pub fn info(&self) {
+    fn info(&self) -> String {
+        let mut output = String::new();
         // Size of first_file in bytes
         let size1 = metadata(&self.first_file_path)
             .expect("Unable to get first file metadata")
@@ -96,29 +97,33 @@ impl Difr {
         let no_of_lines2 = &self.second_file.lines().count();
 
         // """File 1:    file_name    size       no_of_lines"""
-        println!(
-            "{}:\t{}\t{}{}\t{}{}",
+        output = format!(
+            "{}\n{}:\t{}\t{}{}\t{}{}",
+            output,
             "File 1".bright_green(),
             &self.first_file_path.to_string_lossy().bright_cyan(),
             &size1.to_string().bright_cyan(),
             "bytes".bright_cyan(),
             &no_of_lines1.to_string().bright_cyan(),
-            "lines".bright_cyan()
+            "line(s)".bright_cyan()
         );
         // """File 2:    file_name    size       no_of_lines"""
-        println!(
-            "{}:\t{}\t{}{}\t{}{}",
+        output = format!(
+            "{}\n{}:\t{}\t{}{}\t{}{}",
+            output,
             "File 2".bright_green(),
             &self.second_file_path.to_string_lossy().bright_cyan(),
             &size2.to_string().bright_cyan(),
             "bytes".bright_cyan(),
             &no_of_lines2.to_string().bright_cyan(),
-            "lines".bright_cyan()
+            "line(s)".bright_cyan()
         );
+
+        output
     }
 
     // Prints and compares hashes of both files
-    pub fn compare_hashes(&self) -> bool {
+    fn compare_hashes(&self) -> bool {
         println!(
             "\n{}",
             "Computing SHA3-256 hashes of files...".bright_green()
@@ -150,7 +155,9 @@ impl Difr {
     }
 
     // Compares content of both files
-    pub fn difr_include_empty_lines(&mut self) {
+    fn difr_include_empty_lines(&mut self) -> String {
+        let mut output = String::new();
+
         // `Lines` iter of lines of each file string content
         let lines1 = &mut self.first_file.lines();
         let lines2 = &mut self.second_file.lines();
@@ -163,8 +170,9 @@ impl Difr {
             match &lines2.next() {
                 // When lines2 has fewer lines than lines1 and has reached the cut-off
                 None => {
-                    println!(
-                        "{} {} {}:\n{}\t{}",
+                    output = format!(
+                        "{}\n{} {} {}:\n{}\t{}",
+                        output,
                         "Lines".bright_green(),
                         &current_line_no.to_string().bright_green(),
                         "-> End".bright_green(),
@@ -172,10 +180,11 @@ impl Difr {
                         current_line1.bright_cyan()
                     );
                     while let Some(lines1_extra_line) = lines1.next() {
-                        println!("\t{}", lines1_extra_line.bright_cyan());
+                        output = format!("{}\n\t{}", output, lines1_extra_line.bright_cyan());
                     }
-                    println!(
-                        "{}\t{}`{}`",
+                    output = format!(
+                        "{}\n{}\t{}`{}`",
+                        output,
                         ">".bright_green(),
                         "End of File for ".bright_cyan(),
                         &self.second_file_path.to_string_lossy().bright_cyan()
@@ -187,8 +196,9 @@ impl Difr {
                         current_line_no += 1;
                         continue;
                     } else {
-                        println!(
-                            "{} {}:\n{}\t{}\n{}\t{}\n",
+                        output = format!(
+                            "{}\n{} {}:\n{}\t{}\n{}\t{}\n",
+                            output,
                             "Line".bright_green(),
                             &current_line_no.to_string().bright_green(),
                             ">".bright_green(),
@@ -204,8 +214,9 @@ impl Difr {
 
         // When `lines1` has fewer lines than `lines2`
         if let Some(lines2_extra_line) = lines2.next() {
-            println!(
-                "{} {} {}:\n{}\t{}`{}`\n{}\t{}",
+            output = format!(
+                "{}\n{} {} {}:\n{}\t{}`{}`\n{}\t{}",
+                output,
                 "Lines".bright_green(),
                 &current_line_no.to_string().bright_green(),
                 "-> End".bright_green(),
@@ -217,8 +228,10 @@ impl Difr {
             );
         }
         while let Some(lines2_extra_line) = lines2.next() {
-            println!("\t{}", lines2_extra_line.bright_cyan());
+            output = format!("{}\n\t{}", output, lines2_extra_line.bright_cyan());
         }
+
+        output
     }
 
     fn is_text(pathbuf: &PathBuf) -> bool {
@@ -235,7 +248,7 @@ impl Difr {
         }
     }
 
-    pub fn hash(file_string: &str) -> String {
+    fn hash(file_string: &str) -> String {
         let mut hasher = Sha3_256::new();
 
         // Write input message
@@ -246,5 +259,78 @@ impl Difr {
 
         // Convert result from array to hex string
         hex::encode(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn check_whether_hash_is_correct() {
+        assert_eq!(
+            Difr::hash("What is your hash?"),
+            "4de0afb7573ce206e62e02e261d48863e14bfccbc668dc0ea52be5616822016c"
+        );
+    }
+
+    #[test]
+    fn compare_hashes_of_equal_strings() {
+        assert_eq!(
+            Difr::hash("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+            Difr::hash("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn compare_hashes_of_separate_strings() {
+        assert_eq!(
+            Difr::hash("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+            Difr::hash("ZYXWVUTSRQPONMLKJIHGFEDCBA")
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn check_if_image_file_is_a_text_file() {
+        assert!(Difr::is_text(&PathBuf::from(
+            "sample/Beaver_Wallpaper_Grey_4096x2304.png"
+        )));
+    }
+
+    #[test]
+    fn check_if_text_file_is_a_text_file() {
+        assert!(Difr::is_text(&PathBuf::from("sample/foo.txt")));
+    }
+
+    #[test]
+    fn difr_two_equal_files() {
+        let mut app = Difr::init(
+            PathBuf::from("sample/buz.txt"),
+            PathBuf::from("sample/buz.txt"),
+        );
+        let expected_result = String::from("");
+
+        assert_eq!(app.difr_include_empty_lines(), expected_result);
+    }
+
+    #[test]
+    fn difr_two_different_files() {
+        let mut app = Difr::init(
+            PathBuf::from("sample/baz.txt"),
+            PathBuf::from("sample/buz.txt"),
+        );
+        let expected_result = format!(
+            "\n{} {}:\n{}\t{}\n{}\t{}\n",
+            "Line".bright_green(),
+            "1".bright_green(),
+            ">".bright_green(),
+            "Look at what you made me do.".bright_cyan(),
+            ">".bright_green(),
+            "What is your hash?".bright_cyan()
+        );
+
+        assert_eq!(app.difr_include_empty_lines(), expected_result);
     }
 }

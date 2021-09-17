@@ -27,9 +27,9 @@ fn main() {
     let mut app = Difr::init(
         PathBuf::from(file1),
         PathBuf::from(file2),
-        false,
-        None,
-        None,
+        //false,
+        //None,
+        //None,
     );
     app.run();
 }
