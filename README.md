@@ -38,3 +38,5 @@ Line 1:
 >	What is your hash?
 
 ```
+
+ **It uses the `coloured` crate to provide better looking output.**
